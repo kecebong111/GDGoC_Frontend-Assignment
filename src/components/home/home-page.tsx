@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import HeroVisual from "@/components/home/hero-visual";
+import { trackLink } from "@/lib/track-link";
 import Eyebrow from "@/components/ui/eyebrow";
 import { ApiRenderBoundary, ApiStatus, useApiData } from "@/components/ui/api-data";
 
@@ -314,6 +315,7 @@ export default function HomePage() {
     eyebrow: item.tagline,
     description: item.description,
     skills: item.skills.join(" · "),
+    href: trackLink(item.id, item.explore_link),
     artwork: referenceTracks.find(track => item.id.startsWith(track.id))?.artwork ?? "development",
   })) : [];
   const faqs = faqData.state.status === "success" ? faqData.state.items.slice(0, referenceFaqs.length).map(item => ({ question: item.title, answer: item.description })) : [];
@@ -498,7 +500,7 @@ export default function HomePage() {
                   </p>
 
                   <Action
-                    href={`/overview?track=${track.id}`}
+                    href={track.href}
                     className="mt-4"
                   >
                     Explore this track

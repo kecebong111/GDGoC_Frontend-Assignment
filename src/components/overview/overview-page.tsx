@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { RemoteContent } from "@/components/ui/sections";
 import TracksBrowser from "./tracks-browser";
+import { trackLink } from "@/lib/track-link";
 import Eyebrow from "@/components/ui/eyebrow";
 
 import { CONTAINER, HEADING, BODY } from "@/components/ui/page-styles";
@@ -425,9 +426,7 @@ export default function OverviewPage() {
                     const description = readText(item, "description");
                     const skills = readSkills(item);
 
-                    const href =
-                      readText(item, "explore_link") ||
-                      `/overview?track=${kind}`;
+                    const href = trackLink(raw.id, raw.explore_link);
 
                     return { id: raw.id, content: (
                       <article
