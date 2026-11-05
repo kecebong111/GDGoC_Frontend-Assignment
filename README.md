@@ -1,16 +1,16 @@
 # GDGoC UGM frontend
 
-Next.js App Router, TypeScript and Tailwind CSS. Node.js 24 is used locally.
+Next.js App Router, TypeScript and Tailwind CSS. Node.js 24 and pnpm 11.13.1 are used locally.
 
 ## Run and check
 
 ```sh
-npm ci
-npm run dev
-npm run lint
-npx tsc --noEmit
-npm run build
-npm test
+pnpm install --frozen-lockfile
+pnpm dev
+pnpm lint
+pnpm exec tsc --noEmit
+pnpm build
+pnpm test
 ```
 
 Open http://localhost:3000. No API token or environment configuration is required. The public base URL is centralized in `src/lib/api-response.ts`:
@@ -50,7 +50,7 @@ Additional manual Playwright verification used temporary, local-only injections 
 - Overview: the same failure produced three section error messages; retry restored tracks, formats and journey on the same route.
 - Home render boundary: a deliberately throwing child in the tracks boundary produced exactly one section fallback. Hero, all three FAQ entries and footer remained present. Removing the trigger and clicking the boundary retry restored real tracks.
 
-The server test injected a synthetic 503 Response in the fetch layer; it did not interrupt the remote service or prove real transport-level server failure behavior. These integration scenarios were exercised interactively, not saved as automated E2E tests. No injection switches, failure markers or debug components remain in application source. Parser tests are reproducible through `npm test`; the existing TypeScript compiler transpiles the tested module in memory, avoiding module-type and experimental-strip warnings without changing project module configuration.
+The server test injected a synthetic 503 Response in the fetch layer; it did not interrupt the remote service or prove real transport-level server failure behavior. These integration scenarios were exercised interactively, not saved as automated E2E tests. No injection switches, failure markers or debug components remain in application source. Parser tests are reproducible through `pnpm test`; the existing TypeScript compiler transpiles the tested module in memory, avoiding module-type and experimental-strip warnings without changing project module configuration.
 
 ## Saved tracks (Overview only)
 
