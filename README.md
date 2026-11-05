@@ -1,12 +1,12 @@
 # GDGoC UGM — Frontend Assignment
 
-Frontend implementation for the GDGoC UGM 2026/2027 recruitment assignment, built with Next.js, TypeScript, and Tailwind CSS.
+A website built for the GDGoC UGM 2026/2027 frontend recruitment assignment using Next.js, TypeScript, and Tailwind CSS.
 
-The project implements four pages from the provided Figma design: Home, About, Overview, and Contact. Community content is fetched from the provided REST API.
+It includes four pages from the provided Figma design: Home, About, Overview, and Contact. Community content is loaded from the provided REST API.
 
 ## Links
 
-- Live website: https://gdgocfrontendaditya.vercel.app
+- Live website: https://gdgocfrontendaditya.vercel.app/
 - Repository: https://github.com/kecebong111/GDGoC_Frontend-Assignment
 - Video walkthrough: [Google Drive folder](VIDEO_FOLDER_URL)
 
@@ -18,27 +18,20 @@ The project implements four pages from the provided Figma design: Home, About, O
 - Tailwind CSS
 - pnpm
 
-Local development uses Node.js 24 and pnpm 11.13.1.
+Developed locally with Node.js 24 and pnpm 11.13.1.
 
 ## Getting started
-
-Clone the repository and install dependencies:
 
 ```sh
 git clone https://github.com/kecebong111/GDGoC_Frontend-Assignment.git
 cd GDGoC_Frontend-Assignment
 pnpm install --frozen-lockfile
-```
-
-Start the development server:
-
-```sh
 pnpm dev
 ```
 
 Open http://localhost:3000.
 
-No API key or environment variables are required. The API base URL is defined in `src/lib/api-response.ts`.
+No API key or environment variables are needed. The API base URL is defined in `src/lib/api-response.ts`.
 
 ### Production
 
@@ -61,106 +54,100 @@ Base URL: https://gdgoc-ugm-api.vercel.app/api
 
 | Page | Endpoints | Content |
 | --- | --- | --- |
-| Home | `/tracks`, `/faqs` | Learning tracks and FAQ entries |
+| Home | `/tracks`, `/faqs` | Learning tracks and FAQs |
 | About | `/values`, `/roles` | Community values and contribution roles |
 | Overview | `/tracks`, `/formats`, `/journey` | Learning tracks, formats, and journey steps |
 | Contact | `/inquiry-categories` | Inquiry topic cards and dropdown options |
 
-Home and Contact fetch data in the browser. About and Overview fetch on the server and stream their API sections through React Suspense.
+Home and Contact fetch data in the browser. About and Overview fetch on the server, with API sections streamed through React Suspense.
 
-Responses are validated before rendering. The parser checks the response envelope, required fields, duplicate IDs, and endpoint-specific fields. It also normalizes API fields such as `name` and `question` into the internal `title` field.
+API responses are validated before rendering. Validation checks the response structure, required fields, duplicate IDs, and endpoint-specific fields. Fields such as `name` and `question` are mapped to `title` for use in the UI.
 
-Editorial text, artwork, and the example outcomes table are defined locally.
+Artwork, editorial text, and the example outcomes table are defined locally.
 
-### Loading and failures
-
-API sections handle:
+### Fetching states
 
 - **Loading:** skeletons and an accessible loading indicator.
-- **Request failure:** an error message with a manual retry button.
-- **Empty response:** a message explaining that no content is available.
-- **Rendering failure:** section-level client error boundaries, with a route error boundary for unhandled page errors.
+- **Error:** an error message and a manual retry button.
+- **Empty:** a message when the API returns an empty list.
+- **Rendering error:** section-level client error boundaries and a route-level error boundary.
 
-Requests have a 10-second timeout. Server fetches use `cache: "no-store"`. Failed requests do not fall back to mock content.
+Requests have a 10-second timeout. Server fetches use `cache: "no-store"`. Failed requests show an error rather than mock content.
 
 Client retries repeat the section request. Server retries refresh the current route.
+
+### Contact form
+
+Inquiry categories come from the API and stay synchronized between the topic cards and dropdown.
+
+The form validates input but does not send messages because the provided API has no documented submission endpoint. Users can contact the community through the Instagram link instead.
 
 ## Additional features
 
 ### Saved tracks
 
-Users can bookmark tracks on the Overview page and switch between **All tracks** and **Saved tracks** without reloading or making another API request.
+Users can save tracks on the Overview page and switch between **All tracks** and **Saved tracks** without reloading or making another API request.
 
-Only track IDs are stored in `localStorage`, under:
+Only track IDs are saved in `localStorage`, using the key:
 
 ```text
 gdgoc:saved-tracks:v1
 ```
 
-Track content continues to come from the API. The saved count includes only IDs found in the current response.
+Track content still comes from the API. The saved count includes only tracks available in the current response.
 
-The storage logic handles malformed data, duplicate IDs, and unavailable storage. If persistence fails, users can still change their selections while the component remains mounted. Changes are also synchronized between tabs on the same origin.
+Saved tracks remain available after refresh in the same browser and origin. They are not synced across devices. Changes are synchronized between tabs, and a notice appears if browser storage is unavailable.
 
 To try it:
 
 1. Open Overview and save a track.
-2. Switch to Saved tracks.
-3. Refresh the page and check that the bookmark remains.
+2. Select Saved tracks.
+3. Refresh the page to check that the bookmark remains.
 4. Unsave the last track to see the empty state.
 
-Bookmarks are specific to the browser and origin. They do not sync across devices, and the All/Saved filter itself is not persisted.
+### Track selection
 
-### Track selection links
-
-“Explore this track” opens Overview with the track ID in the URL:
+“Explore this track” opens Overview with the selected track ID:
 
 ```text
 /overview?track=development#tracks
 ```
 
-The page scrolls to the tracks section and marks the matching card with a blue outline and a “Selected track” label. Unknown IDs are ignored.
+The page scrolls to the tracks section and highlights the matching card with a blue outline and a “Selected track” label. Unknown IDs are ignored.
 
-## Code organization
+## Project structure
 
-| Location | Responsibility |
+| Location | Purpose |
 | --- | --- |
-| `src/app/` | Routes, metadata, root layout, and route-level fallbacks |
+| `src/app/` | Routes, metadata, root layout, and page fallbacks |
 | `src/components/layout/` | Header, navigation, and footer |
 | `src/components/home/` | Home page and hero artwork |
 | `src/components/about/` | About page and artwork |
-| `src/components/overview/` | Overview page, track interactions, and saved-track hook |
+| `src/components/overview/` | Overview page, track filtering, and saved-track hook |
 | `src/components/contact/` | Contact form and inquiry selection |
-| `src/components/ui/` | Shared UI, API section handling, and retry controls |
+| `src/components/ui/` | Shared components, fetching states, and retry controls |
 | `src/lib/` | API fetching, response validation, and track utilities |
-| `tests/` | Automated tests for parsers and track utilities |
+| `tests/` | Tests for API parsing and track utilities |
 
-Route files delegate page content to separate components. Shared fetching and validation logic stays outside page markup.
+Route files handle metadata and render their page components. Fetching and response validation are kept separate from the page markup.
 
-For Overview, the server fetches and validates tracks before passing data and card content to the client-side `TracksBrowser`. That component manages filtering, bookmarks, and selection highlighting. Card content is matched by track ID rather than array position.
+On Overview, the server fetches and validates tracks before passing the data and card content to `TracksBrowser`. This client component handles bookmarks, filtering, and selection highlighting. Cards are matched by track ID rather than array position.
 
 ## Testing
 
 Automated tests cover:
 
 - Valid, empty, and malformed API responses.
-- Duplicate IDs and invalid track destinations.
-- Saved-ID parsing and deduplication.
-- Save/unsave behavior without mutating the original array.
+- Duplicate IDs and invalid track links.
+- Saved-ID validation and deduplication.
+- Saving and removing tracks without mutating the original array.
 - Filtering order and unavailable saved IDs.
-- Card matching independently of array order.
+- Matching cards by ID regardless of array order.
 - Track-link encoding and selection validation.
 
-Manual browser checks have covered API loading and failure states, retry, bookmark persistence after refresh, saved-track filtering, empty states, and cross-tab synchronization.
+Manual browser checks covered loading and error states, retry, saved-track filtering, persistence after refresh, empty states, and cross-tab synchronization. These browser checks are not included as automated end-to-end tests.
 
-Browser checks were performed interactively; they are not included as automated end-to-end tests. A full accessibility audit and pixel-by-pixel comparison against Figma have not been completed.
+## References
 
-## Limitations
-
-- The provided API does not document a contact submission endpoint. The form validates input but does not send messages or claim successful delivery. Instagram is provided as an alternative contact channel.
-- Saved tracks use browser storage rather than an account. Clearing site data removes bookmarks.
-- If storage is unavailable, temporary selections are lost after reload or when the component unmounts.
-- Simultaneous bookmark changes across tabs use last-writer-wins behavior.
-
-## Design and data sources
-
-The interface is based on the Figma design supplied with the assignment. Dynamic community content uses the provided GDGoC UGM API.
+- UI: Figma design provided with the assignment.
+- Data: GDGoC UGM REST API provided with the assignment.
