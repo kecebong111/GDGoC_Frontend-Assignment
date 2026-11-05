@@ -1,69 +1,166 @@
-# GDGoC UGM frontend
+# GDGoC UGM — Frontend Assignment
 
-Next.js App Router, TypeScript and Tailwind CSS. Node.js 24 and pnpm 11.13.1 are used locally.
+Frontend implementation for the GDGoC UGM 2026/2027 recruitment assignment, built with Next.js, TypeScript, and Tailwind CSS.
 
-## Run and check
+The project implements four pages from the provided Figma design: Home, About, Overview, and Contact. Community content is fetched from the provided REST API.
+
+## Links
+
+- Live website: https://gdgocfrontendaditya.vercel.app
+- Repository: https://github.com/kecebong111/GDGoC_Frontend-Assignment
+- Video walkthrough: [Google Drive folder](VIDEO_FOLDER_URL)
+
+## Tech stack
+
+- Next.js App Router
+- React
+- TypeScript
+- Tailwind CSS
+- pnpm
+
+Local development uses Node.js 24 and pnpm 11.13.1.
+
+## Getting started
+
+Clone the repository and install dependencies:
 
 ```sh
+git clone https://github.com/kecebong111/GDGoC_Frontend-Assignment.git
+cd GDGoC_Frontend-Assignment
 pnpm install --frozen-lockfile
+```
+
+Start the development server:
+
+```sh
 pnpm dev
+```
+
+Open http://localhost:3000.
+
+No API key or environment variables are required. The API base URL is defined in `src/lib/api-response.ts`.
+
+### Production
+
+```sh
+pnpm build
+pnpm start
+```
+
+### Checks
+
+```sh
 pnpm lint
 pnpm exec tsc --noEmit
-pnpm build
 pnpm test
 ```
 
-Open http://localhost:3000. No API token or environment configuration is required. The public base URL is centralized in `src/lib/api-response.ts`:
+## Pages and API integration
 
-`https://gdgoc-ugm-api.vercel.app/api`
+Base URL: https://gdgoc-ugm-api.vercel.app/api
 
-## API consumption
-
-| Page | Endpoints | Rendered content |
+| Page | Endpoints | Content |
 | --- | --- | --- |
-| Home | GET `/tracks`, `/faqs` | Track cards and first three FAQs |
-| Overview | GET `/tracks`, `/formats`, `/journey` | Tracks, learning formats and journey steps |
-| About | GET `/values`, `/roles` | Community values and contribution roles |
-| Contact | GET `/inquiry-categories` | Topic cards and select options |
+| Home | `/tracks`, `/faqs` | Learning tracks and FAQ entries |
+| About | `/values`, `/roles` | Community values and contribution roles |
+| Overview | `/tracks`, `/formats`, `/journey` | Learning tracks, formats, and journey steps |
+| Contact | `/inquiry-categories` | Inquiry topic cards and dropdown options |
 
-Home and Contact fetch in the browser. Overview and About fetch on the Next.js server, so their upstream requests do not appear directly in browser Network tools. Server sections stream under Suspense and use `cache: "no-store"`; no successful static data is substituted after failure. Client requests have a 10-second abort timeout and discard results after unmount. Retries are user-triggered only.
+Home and Contact fetch data in the browser. About and Overview fetch on the server and stream their API sections through React Suspense.
 
-Responses are validated before rendering: success/data envelope, IDs, duplicate IDs, endpoint-specific names/descriptions, track skills/destination, FAQ category and journey step. Editorial copy, artwork, layout and illustrative outcomes remain separate from API content. API wording is not rewritten to match screenshot copy.
+Responses are validated before rendering. The parser checks the response envelope, required fields, duplicate IDs, and endpoint-specific fields. It also normalizes API fields such as `name` and `question` into the internal `title` field.
 
-## Fetching states
+Editorial text, artwork, and the example outcomes table are defined locally.
 
-- Loading: accessible indicator and space-reserving skeleton; reserved heights are estimates, not a guarantee of zero layout shift for arbitrary API text.
-- HTTP, network, timeout, JSON or schema failure: explicit error with manual retry.
-- Successful empty array: explicit empty message.
-- Rendering exceptions: local client error boundaries around API sections, plus the route error boundary for server-render failures. Server fetch failures are handled separately from render failures.
-- Server retry refreshes the current route; client retry repeats that section request. No automatic retry loop.
+### Loading and failures
 
-Contact submission is not documented by the provided API. The form does not POST or claim success, and keeps the visible message-not-sent notice. No backend, proxy, email service or database was added.
+API sections handle:
 
-## Verification and limits
+- **Loading:** skeletons and an accessible loading indicator.
+- **Request failure:** an error message with a manual retry button.
+- **Empty response:** a message explaining that no content is available.
+- **Rendering failure:** section-level client error boundaries, with a route error boundary for unhandled page errors.
 
-Parser tests cover valid, empty, malformed, duplicate and unsafe track-link responses. Playwright was used to intercept Home requests and verify loading, empty data, HTTP 503, network failure, malformed data and manual retry, then restore the real API. Contact categories were checked with empty and actual responses.
+Requests have a 10-second timeout. Server fetches use `cache: "no-store"`. Failed requests do not fall back to mock content.
 
-Additional manual Playwright verification used temporary, local-only injections (removed afterwards):
+Client retries repeat the section request. Server retries refresh the current route.
 
-- About: forced HTTP-503-equivalent fetch failure produced two section error messages; after removing the failure marker, clicking Try again restored values and roles with zero remaining section errors.
-- Overview: the same failure produced three section error messages; retry restored tracks, formats and journey on the same route.
-- Home render boundary: a deliberately throwing child in the tracks boundary produced exactly one section fallback. Hero, all three FAQ entries and footer remained present. Removing the trigger and clicking the boundary retry restored real tracks.
+## Additional features
 
-The server test injected a synthetic 503 Response in the fetch layer; it did not interrupt the remote service or prove real transport-level server failure behavior. These integration scenarios were exercised interactively, not saved as automated E2E tests. No injection switches, failure markers or debug components remain in application source. Parser tests are reproducible through `pnpm test`; the existing TypeScript compiler transpiles the tested module in memory, avoiding module-type and experimental-strip warnings without changing project module configuration.
+### Saved tracks
 
-## Saved tracks (Overview only)
+Users can bookmark tracks on the Overview page and switch between **All tracks** and **Saved tracks** without reloading or making another API request.
 
-Each track has an independent Save track / Saved button. All tracks and Saved tracks switch locally without reloading or requesting API data again. The count includes only saved IDs present in the current validated response. Missing IDs stay stored but never create fake cards. API empty responses are handled before the bookmark component, separately from an empty saved selection.
+Only track IDs are stored in `localStorage`, under:
 
-Try saving a track at `/overview`, switch to Saved tracks, reload, and unsave the last displayed card. Back to All tracks restores the list. Only IDs are persisted under `gdgoc:saved-tracks:v1`; no content or personal information is stored. Persistence applies to this browser and origin, not an account or other devices. The selected All/Saved view itself is not persisted.
+```text
+gdgoc:saved-tracks:v1
+```
 
-`useSavedTracks` reads browser storage after hydration before enabling controls, never writes the initial empty state, validates and deduplicates JSON IDs, and synchronizes storage events between tabs. Read/write failure or corrupt JSON falls back to in-memory choices with a notice; those choices do not survive reload. Concurrent writes are last-writer-wins, not transactional synchronization.
+Track content continues to come from the API. The saved count includes only IDs found in the current response.
 
-The server keeps fetching/validating tracks through RemoteContent. Its render callback sends sorted, serializable track data and `{ id, content: ReactNode }` card slots to TracksBrowser; no render function crosses the client boundary. Cards are indexed by ID, independently of slot-array order. Artwork and card content remain server-rendered. Local filtering preserves the track-data order.
+The storage logic handles malformed data, duplicate IDs, and unavailable storage. If persistence fails, users can still change their selections while the component remains mounted. Changes are also synchronized between tabs on the same origin.
 
-ID-matching follow-up verification: `npm test` passed 10/10, including reversed/shuffled card-source matching against track order; lint, TypeScript and production build passed. The helper test verifies identity lookup, not the complete UI. Browser checks in this follow-up verified Development save, Saved filter showing only Development, refresh persistence, last-card unsave, revised empty-state copy and return to all three tracks in original order. Different-order ReactNode composition was not separately exercised in-browser. Existing parent-directory lockfile warning remains unrelated to this change.
+To try it:
 
-Automated tests cover storage parsing, corrupt values, toggle immutability and filtering order/missing IDs. Browser checks passed for save/unsave, reload persistence, saved empty state, last-card removal, corrupt storage, denied storage read, keyboard Enter, two-tab synchronization and 390px overflow check. Full browser-restart persistence, isolated quota/write failure, complete keyboard traversal and a pixel-diff comparison have not been tested. Previous controlled API failure tests remain documented above; they were not repeated as part of this bookmark change.
+1. Open Overview and save a track.
+2. Switch to Saved tracks.
+3. Refresh the page and check that the bookmark remains.
+4. Unsave the last track to see the empty state.
 
-The original artwork/font comparison and a full accessibility audit remain separate work.
+Bookmarks are specific to the browser and origin. They do not sync across devices, and the All/Saved filter itself is not persisted.
+
+### Track selection links
+
+“Explore this track” opens Overview with the track ID in the URL:
+
+```text
+/overview?track=development#tracks
+```
+
+The page scrolls to the tracks section and marks the matching card with a blue outline and a “Selected track” label. Unknown IDs are ignored.
+
+## Code organization
+
+| Location | Responsibility |
+| --- | --- |
+| `src/app/` | Routes, metadata, root layout, and route-level fallbacks |
+| `src/components/layout/` | Header, navigation, and footer |
+| `src/components/home/` | Home page and hero artwork |
+| `src/components/about/` | About page and artwork |
+| `src/components/overview/` | Overview page, track interactions, and saved-track hook |
+| `src/components/contact/` | Contact form and inquiry selection |
+| `src/components/ui/` | Shared UI, API section handling, and retry controls |
+| `src/lib/` | API fetching, response validation, and track utilities |
+| `tests/` | Automated tests for parsers and track utilities |
+
+Route files delegate page content to separate components. Shared fetching and validation logic stays outside page markup.
+
+For Overview, the server fetches and validates tracks before passing data and card content to the client-side `TracksBrowser`. That component manages filtering, bookmarks, and selection highlighting. Card content is matched by track ID rather than array position.
+
+## Testing
+
+Automated tests cover:
+
+- Valid, empty, and malformed API responses.
+- Duplicate IDs and invalid track destinations.
+- Saved-ID parsing and deduplication.
+- Save/unsave behavior without mutating the original array.
+- Filtering order and unavailable saved IDs.
+- Card matching independently of array order.
+- Track-link encoding and selection validation.
+
+Manual browser checks have covered API loading and failure states, retry, bookmark persistence after refresh, saved-track filtering, empty states, and cross-tab synchronization.
+
+Browser checks were performed interactively; they are not included as automated end-to-end tests. A full accessibility audit and pixel-by-pixel comparison against Figma have not been completed.
+
+## Limitations
+
+- The provided API does not document a contact submission endpoint. The form validates input but does not send messages or claim successful delivery. Instagram is provided as an alternative contact channel.
+- Saved tracks use browser storage rather than an account. Clearing site data removes bookmarks.
+- If storage is unavailable, temporary selections are lost after reload or when the component unmounts.
+- Simultaneous bookmark changes across tabs use last-writer-wins behavior.
+
+## Design and data sources
+
+The interface is based on the Figma design supplied with the assignment. Dynamic community content uses the provided GDGoC UGM API.
