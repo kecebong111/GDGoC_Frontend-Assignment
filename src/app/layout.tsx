@@ -18,6 +18,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  icons: {
+    icon: { url: "/icons/icon.png", type: "image/png" },
+    shortcut: "/icons/icon.png",
+  },
   title: {
     default: "GDGoC UGM | Learn and build together",
     template: "%s | GDGoC UGM",
