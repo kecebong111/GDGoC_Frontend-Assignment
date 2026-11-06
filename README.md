@@ -10,7 +10,6 @@ pnpm dev
 pnpm lint
 pnpm exec tsc --noEmit
 pnpm build
-pnpm test
 ```
 
 Open http://localhost:3000. No API token or environment configuration is required. The public base URL is centralized in `src/lib/api-response.ts`:
@@ -42,7 +41,7 @@ Contact submission is not documented by the provided API. The form does not POST
 
 ## Verification and limits
 
-Parser tests cover valid, empty, malformed, duplicate and unsafe track-link responses. Playwright was used to intercept Home requests and verify loading, empty data, HTTP 503, network failure, malformed data and manual retry, then restore the real API. Contact categories were checked with empty and actual responses.
+This repository does not include an automated test suite. During development, Playwright was used to intercept Home requests and verify loading, empty data, HTTP 503, network failure, malformed data and manual retry, then restore the real API. Contact categories were checked with empty and actual responses.
 
 Additional manual Playwright verification used temporary, local-only injections (removed afterwards):
 
@@ -50,7 +49,7 @@ Additional manual Playwright verification used temporary, local-only injections 
 - Overview: the same failure produced three section error messages; retry restored tracks, formats and journey on the same route.
 - Home render boundary: a deliberately throwing child in the tracks boundary produced exactly one section fallback. Hero, all three FAQ entries and footer remained present. Removing the trigger and clicking the boundary retry restored real tracks.
 
-The server test injected a synthetic 503 Response in the fetch layer; it did not interrupt the remote service or prove real transport-level server failure behavior. These integration scenarios were exercised interactively, not saved as automated E2E tests. No injection switches, failure markers or debug components remain in application source. Parser tests are reproducible through `pnpm test`; the existing TypeScript compiler transpiles the tested module in memory, avoiding module-type and experimental-strip warnings without changing project module configuration.
+The server check injected a synthetic 503 Response in the fetch layer; it did not interrupt the remote service or prove real transport-level server failure behavior. These scenarios were exercised interactively. No injection switches, failure markers or debug components remain in application source.
 
 ## Saved tracks (Overview only)
 
@@ -62,8 +61,6 @@ Try saving a track at `/overview`, switch to Saved tracks, reload, and unsave th
 
 The server keeps fetching/validating tracks through RemoteContent. Its render callback sends sorted, serializable track data and `{ id, content: ReactNode }` card slots to TracksBrowser; no render function crosses the client boundary. Cards are indexed by ID, independently of slot-array order. Artwork and card content remain server-rendered. Local filtering preserves the track-data order.
 
-ID-matching follow-up verification: `npm test` passed 10/10, including reversed/shuffled card-source matching against track order; lint, TypeScript and production build passed. The helper test verifies identity lookup, not the complete UI. Browser checks in this follow-up verified Development save, Saved filter showing only Development, refresh persistence, last-card unsave, revised empty-state copy and return to all three tracks in original order. Different-order ReactNode composition was not separately exercised in-browser. Existing parent-directory lockfile warning remains unrelated to this change.
-
-Automated tests cover storage parsing, corrupt values, toggle immutability and filtering order/missing IDs. Browser checks passed for save/unsave, reload persistence, saved empty state, last-card removal, corrupt storage, denied storage read, keyboard Enter, two-tab synchronization and 390px overflow check. Full browser-restart persistence, isolated quota/write failure, complete keyboard traversal and a pixel-diff comparison have not been tested. Previous controlled API failure tests remain documented above; they were not repeated as part of this bookmark change.
+Development browser checks covered save/unsave, reload persistence, saved empty state, last-card removal, return to all tracks, corrupt storage, denied storage read, keyboard Enter, two-tab synchronization and a 390px overflow check. Different-order ReactNode composition, full browser-restart persistence, isolated quota/write failure, complete keyboard traversal and a pixel-diff comparison were not tested in-browser.
 
 The original artwork/font comparison and a full accessibility audit remain separate work.
