@@ -8,7 +8,7 @@ It includes four pages from the provided Figma design: Home, About, Overview, an
 
 - Live website: https://gdgocfrontendaditya.vercel.app/
 - Repository: https://github.com/kecebong111/GDGoC_Frontend-Assignment
-- Video walkthrough: [Google Drive folder](VIDEO_FOLDER_URL)
+- Video walkthrough: [Google Drive folder]([VIDEO_FOLDER_URL](https://drive.google.com/drive/folders/1vMn8KE1Oth0j0gpwrkV8A2_j3al8ZeHE?usp=sharing))
 
 ## Tech stack
 
